@@ -11,12 +11,12 @@ import (
 const DBFILE string = "../../data/hunts.db"
 
 type Hunt struct {
-	name       string
-	mon        string
-	encounters int
-	status     bool
-	start      *time.Time
-	end        *time.Time
+	Name       string `json:"name"`
+	Mon        string `json:"mon"`
+	Encounters int    `json:"encounters"`
+	Status     bool   `json:"status"`
+	Start      string `json:"start"`
+	End        string `json:"end"`
 }
 
 func GetTable() *sql.DB {
@@ -31,8 +31,8 @@ func GetTable() *sql.DB {
 		mon TEXT NOT NULL,
 		encounters INTEGER,
 		status BOOL,
-		start DATETIME,
-		end DATETIME
+		start STRING,
+		end STRING
 	);`
 
 	if _, err := db.Exec(create); err != nil {
@@ -43,7 +43,7 @@ func GetTable() *sql.DB {
 }
 
 func InsertHunt(db *sql.DB, name string, mon string, encounters int, status bool, start time.Time) (int, error) {
-	res, err := db.Exec("INSERT INTO hunt VALUES (?, ?, ?, ?, ?, NULL)", name, mon, encounters, status, start)
+	res, err := db.Exec("INSERT INTO hunt VALUES (?, ?, ?, ?, ?, 'none')", name, mon, encounters, status, time.Now().Format(time.DateTime))
 	if err != nil {
 		return 0, err
 	}
@@ -63,20 +63,20 @@ func ReadHunt(db *sql.DB, name string) (Hunt, error) {
 	WHERE name=?`, name)
 
 	hunt := Hunt{}
-	err := row.Scan(&hunt.name, &hunt.mon, &hunt.encounters, &hunt.status, &hunt.start, &hunt.end)
+	err := row.Scan(&hunt.Name, &hunt.Mon, &hunt.Encounters, &hunt.Status, &hunt.Start, &hunt.End)
 	if err == sql.ErrNoRows {
 		return Hunt{}, sql.ErrNoRows
 	}
 	return hunt, err
 }
 
-func UpdateHunt(db *sql.DB, hunt Hunt) error {
+func UpdateHunt(db *sql.DB, hunt Hunt, name string) error {
 	const update string = `
 	UPDATE hunt
-	SET mon = ?, encounters = ?, status = ?, start = ?, end = ?
+	SET name = ?, mon = ?, encounters = ?, status = ?, start = ?, end = ?
 	WHERE name=?;`
 
-	_, err := db.Exec(update, hunt.mon, hunt.encounters, hunt.status, hunt.start, hunt.end, hunt.name)
+	_, err := db.Exec(update, hunt.Name, hunt.Mon, hunt.Encounters, hunt.Status, hunt.Start, hunt.End, name)
 
 	return err
 }
