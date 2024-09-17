@@ -10,6 +10,7 @@ import (
 )
 
 func roll(w http.ResponseWriter, r *http.Request) {
+	// TODO: Add a bad response if odds is missing
 	odds := r.URL.Query().Get("odds")
 	rawParams := strings.Split(odds, "/")
 	var params []int
@@ -25,32 +26,32 @@ func roll(w http.ResponseWriter, r *http.Request) {
 
 	roll := rand.Intn(params[1])
 	result := roll == 0
-	w.Write([]byte(fmt.Sprintf("%t, %d", result, roll)))
+	w.Write([]byte(fmt.Sprintf("%t", result)))
 }
 
-func dbCreate() {
-
-}
-
-func dbRead() {
+func dbCreate(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func dbUpdate() {
+func dbRead(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func dbDelete() {
+func dbUpdate(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func fetchNames() {
+func dbDelete(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func fetchNames(w http.ResponseWriter, r *http.Request) {
 
 }
 
 func main() {
 	// Define Routes
-	http.HandleFunc("POST /roll", roll)
+	http.HandleFunc("GET /roll", roll)
 
 	// Start Server
 	log.Fatal(http.ListenAndServe(":8080", nil))
