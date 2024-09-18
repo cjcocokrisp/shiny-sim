@@ -228,6 +228,5 @@ func main() {
 
 	// Start Server
 	fmt.Printf("Server started on port %s\n", port)
-	http.Handle("/", router)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }

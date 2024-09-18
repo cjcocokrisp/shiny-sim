@@ -1,3 +1,5 @@
 /src/api/api
+/src/api/dist/
 /src/api/routes
 /data
+/node_modules
