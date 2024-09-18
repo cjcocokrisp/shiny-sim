@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"slices"
 	"strconv"
 	"strings"
@@ -19,10 +22,24 @@ var db *sql.DB
 
 const port string = "8080"
 
+const refreshDate int = 30
+
 var validQueries = []string{"name", "mon", "encounters", "status", "start", "end"}
+
+var monList MonList
 
 type ErrorResponse struct {
 	Message string `json:"error"`
+}
+
+type MonList struct {
+	Count    int    `json:"count"`
+	Next     string `json:"next"`
+	Previous string `json:"previous"`
+	Results  []struct {
+		Name string `json:"name"`
+		Url  string `json:"url"`
+	} `json:"results"`
 }
 
 func roll(w http.ResponseWriter, r *http.Request) {
@@ -136,12 +153,69 @@ func dbDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func fetchNames(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(monList)
+}
 
+func compileNames() {
+	res, err := http.Get("https://pokeapi.co/api/v2/pokemon?limit=1000000&offset=0")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var parsed MonList
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		log.Fatal(err)
+	}
+
+	file, _ := os.Create("../../data/mon_list.txt")
+	defer file.Close()
+
+	file.WriteString(fmt.Sprintf("%s\n", time.Now().Format(time.DateTime)))
+	for _, mon := range parsed.Results {
+		file.WriteString(fmt.Sprintf("%s\n", mon.Name))
+	}
 }
 
 func main() {
 	// Open DB
 	db = GetTable()
+
+	// Check if list of mons needs to be updated and then parse it
+	file, err := os.Open("../../data/mon_list.txt")
+	if err != nil {
+		fmt.Println("Mon list does not exist, compiling list")
+		compileNames()
+	}
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	scanner.Scan()
+	date, err := time.Parse(time.DateTime, scanner.Text())
+	if err == nil {
+		date = date.AddDate(0, 0, refreshDate)
+		if time.Now().Day() > date.Day() || time.Now().Month() > date.Month() ||
+			time.Now().Year() > date.Year() {
+			compileNames()
+		}
+	} else {
+		compileNames()
+	}
+
+	for scanner.Scan() {
+		monList.Results = append(monList.Results, struct {
+			Name string "json:\"name\""
+			Url  string "json:\"url\""
+		}{
+			Name: scanner.Text(),
+			Url:  "",
+		})
+		monList.Count++
+	}
+	file.Close()
 
 	// Define Routes
 	router := mux.NewRouter()
@@ -150,6 +224,7 @@ func main() {
 	router.HandleFunc("/hunt/{name}", dbRead).Methods("GET")
 	router.HandleFunc("/hunt/{name}", dbUpdate).Methods("PATCH")
 	router.HandleFunc("/hunt/{name}", dbDelete).Methods("DELETE")
+	router.HandleFunc("/mon-list", fetchNames).Methods("GET")
 
 	// Start Server
 	fmt.Printf("Server started on port %s\n", port)
