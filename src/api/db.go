@@ -70,6 +70,23 @@ func ReadHunt(db *sql.DB, name string) (Hunt, error) {
 	return hunt, err
 }
 
+func ReadAllHunts(db *sql.DB) ([]Hunt, error) {
+	rows, err := db.Query(`
+	SELECT * 
+	FROM hunt`)
+	if err != nil {
+		return nil, err
+	}
+
+	var hunts []Hunt
+	for rows.Next() {
+		var hunt Hunt
+		rows.Scan(&hunt.Name, &hunt.Mon, &hunt.Encounters, &hunt.Status, &hunt.Start, &hunt.End)
+		hunts = append(hunts, hunt)
+	}
+	return hunts, nil
+}
+
 func UpdateHunt(db *sql.DB, hunt Hunt, name string) error {
 	const update string = `
 	UPDATE hunt

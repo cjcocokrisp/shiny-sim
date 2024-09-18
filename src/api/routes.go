@@ -94,9 +94,20 @@ func dbRead(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(res)
 		fmt.Printf("Attempted return %s failed (%s)\n", vars["name"], err.Error())
 	} else {
-		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(hunt)
 		fmt.Printf("Returned item %s\n", vars["name"])
+	}
+
+}
+
+func dbReadAll(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	hunts, err := ReadAllHunts(db)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		json.NewEncoder(w).Encode(hunts)
+		fmt.Printf("Returned all items")
 	}
 
 }
@@ -220,6 +231,7 @@ func main() {
 	// Define Routes
 	router := mux.NewRouter()
 	router.HandleFunc("/roll", roll).Methods("GET")
+	router.HandleFunc("/hunt", dbReadAll).Methods("GET")
 	router.HandleFunc("/hunt/{name}", dbCreate).Methods("POST")
 	router.HandleFunc("/hunt/{name}", dbRead).Methods("GET")
 	router.HandleFunc("/hunt/{name}", dbUpdate).Methods("PATCH")
