@@ -13,7 +13,9 @@ const DBFILE string = "../../data/hunts.db"
 type Hunt struct {
 	Name       string `json:"name"`
 	Mon        string `json:"mon"`
+	Odds       string `json:"odds"`
 	Encounters int    `json:"encounters"`
+	Type       string `json:"type"`
 	Status     bool   `json:"status"`
 	Start      string `json:"start"`
 	End        string `json:"end"`
@@ -29,7 +31,9 @@ func GetTable() *sql.DB {
 	CREATE TABLE IF NOT EXISTS hunt (
 		name TEXT NOT NULL PRIMARY KEY,
 		mon TEXT NOT NULL,
+		odds TEXT NOT NULL,
 		encounters INTEGER,
+		type TEXT,
 		status BOOL,
 		start STRING,
 		end STRING
@@ -42,8 +46,8 @@ func GetTable() *sql.DB {
 	return db
 }
 
-func InsertHunt(db *sql.DB, name string, mon string, encounters int, status bool, start time.Time) (int, error) {
-	res, err := db.Exec("INSERT INTO hunt VALUES (?, ?, ?, ?, ?, 'none')", name, mon, encounters, status, time.Now().Format(time.DateTime))
+func InsertHunt(db *sql.DB, name string, mon string, odds string, encounters int, huntType string, status bool, start time.Time) (int, error) {
+	res, err := db.Exec("INSERT INTO hunt VALUES (?, ?, ?, ?, ?, ?, ?, 'none')", name, mon, odds, encounters, huntType, status, time.Now().Format(time.DateTime))
 	if err != nil {
 		return 0, err
 	}
@@ -63,7 +67,7 @@ func ReadHunt(db *sql.DB, name string) (Hunt, error) {
 	WHERE name=?`, name)
 
 	hunt := Hunt{}
-	err := row.Scan(&hunt.Name, &hunt.Mon, &hunt.Encounters, &hunt.Status, &hunt.Start, &hunt.End)
+	err := row.Scan(&hunt.Name, &hunt.Mon, &hunt.Odds, &hunt.Encounters, &hunt.Type, &hunt.Status, &hunt.Start, &hunt.End)
 	if err == sql.ErrNoRows {
 		return Hunt{}, sql.ErrNoRows
 	}
@@ -81,7 +85,7 @@ func ReadAllHunts(db *sql.DB) ([]Hunt, error) {
 	var hunts []Hunt
 	for rows.Next() {
 		var hunt Hunt
-		rows.Scan(&hunt.Name, &hunt.Mon, &hunt.Encounters, &hunt.Status, &hunt.Start, &hunt.End)
+		rows.Scan(&hunt.Name, &hunt.Mon, &hunt.Odds, &hunt.Encounters, &hunt.Type, &hunt.Status, &hunt.Start, &hunt.End)
 		hunts = append(hunts, hunt)
 	}
 	return hunts, nil
@@ -90,10 +94,10 @@ func ReadAllHunts(db *sql.DB) ([]Hunt, error) {
 func UpdateHunt(db *sql.DB, hunt Hunt, name string) error {
 	const update string = `
 	UPDATE hunt
-	SET name = ?, mon = ?, encounters = ?, status = ?, start = ?, end = ?
+	SET name = ?, mon = ?, odds = ?, encounters = ?, type = ?, status = ?, start = ?, end = ?
 	WHERE name=?;`
 
-	_, err := db.Exec(update, hunt.Name, hunt.Mon, hunt.Encounters, hunt.Status, hunt.Start, hunt.End, name)
+	_, err := db.Exec(update, hunt.Name, hunt.Mon, hunt.Odds, hunt.Encounters, hunt.Type, hunt.Status, hunt.Start, hunt.End, name)
 
 	return err
 }

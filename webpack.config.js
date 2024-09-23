@@ -19,6 +19,10 @@ module.exports = {
           loader: 'babel-loader'
         }
       },
+      /*{
+        test: /\.png$/,
+        use: 'public/'
+      },*/
       {
         test: /\.css$/,
         use: [
@@ -26,7 +30,7 @@ module.exports = {
             {
                 loader: 'css-loader',
                 options: {
-                    importLoaders: 1
+                    importLoaders: 1,
                 }
             },
             {
@@ -39,15 +43,20 @@ module.exports = {
                         ] 
                     }
                 }
-        }]
+            },
+        ]
       },
       {
-        test: /\.(png|woff|woff2|eot|ttf|svg)$/,
+        test: /\.(woff|woff2|eot|ttf|)$/,
         loader: 'url-loader',
         options: {
           limit: 100000
         }
-      }
+      },
+      {           
+        test: /\.(jpg|png|svg|gif)$/,
+        type: 'asset/resource',         
+      }, 
     ]
   },
   resolve: {

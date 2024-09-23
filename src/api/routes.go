@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var db *sql.DB
@@ -24,7 +26,7 @@ const port string = "8080"
 
 const refreshDate int = 30
 
-var validQueries = []string{"name", "mon", "encounters", "status", "start", "end"}
+var validQueries = []string{"name", "mon", "odds", "encounters", "type", "status", "start", "end"}
 
 var monList MonList
 
@@ -72,7 +74,17 @@ func dbCreate(w http.ResponseWriter, r *http.Request) {
 		mon = "Missingno"
 	}
 
-	_, err := InsertHunt(db, vars["name"], mon, 0, false, time.Now())
+	huntType := r.URL.Query().Get("type")
+	if huntType == "" {
+		huntType = "Simulation"
+	}
+
+	odds := r.URL.Query().Get("odds")
+	if odds == "" {
+		odds = "0/0"
+	}
+
+	_, err := InsertHunt(db, vars["name"], mon, odds, 0, huntType, false, time.Now())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Printf("Failed to create %s (%s)\n", vars["name"], err.Error())
@@ -97,7 +109,6 @@ func dbRead(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(hunt)
 		fmt.Printf("Returned item %s\n", vars["name"])
 	}
-
 }
 
 func dbReadAll(w http.ResponseWriter, r *http.Request) {
@@ -107,9 +118,8 @@ func dbReadAll(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	} else {
 		json.NewEncoder(w).Encode(hunts)
-		fmt.Printf("Returned all items")
+		fmt.Printf("Returned all hunt items\n")
 	}
-
 }
 
 func dbUpdate(w http.ResponseWriter, r *http.Request) {
@@ -130,8 +140,12 @@ func dbUpdate(w http.ResponseWriter, r *http.Request) {
 				updates.Name = q[1]
 			case "mon":
 				updates.Mon = q[1]
+			case "odds":
+				updates.Odds = q[1]
 			case "encounters":
 				updates.Encounters, _ = strconv.Atoi(q[1])
+			case "type":
+				updates.Type = q[1]
 			case "status":
 				updates.Status, _ = strconv.ParseBool(q[1])
 			case "start":
@@ -142,6 +156,7 @@ func dbUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	fmt.Println(updates)
 	err = UpdateHunt(db, updates, vars["name"])
 	if err != nil {
 		fmt.Printf("Failed to patch %s (%s)\n", vars["name"], err.Error())
@@ -188,7 +203,8 @@ func compileNames() {
 
 	file.WriteString(fmt.Sprintf("%s\n", time.Now().Format(time.DateTime)))
 	for _, mon := range parsed.Results {
-		file.WriteString(fmt.Sprintf("%s\n", mon.Name))
+		c := cases.Title(language.Und)
+		file.WriteString(fmt.Sprintf("%s\n", c.String(mon.Name)))
 	}
 }
 
