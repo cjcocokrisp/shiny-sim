@@ -157,7 +157,6 @@ func dbUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fmt.Println(updates)
 	err = UpdateHunt(db, updates, vars["name"])
 	if err != nil {
 		fmt.Printf("Failed to patch %s (%s)\n", vars["name"], err.Error())

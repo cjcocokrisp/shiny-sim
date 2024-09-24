@@ -27,3 +27,4 @@ https://www.pinterest.com/pin/8bit-pokeball--510384570272502479/ - Closed Pokeba
 Logo Generated with Namecheap Logo Generator 
 https://makeagif.com/gif/pokemon-shiny-sparkle-green-screen-gen-3-HStro8 - shiny sparkles
 https://www.youtube.com/watch?v=7lgHHclmSa0 - shiny sound 
+https://pokemontowerdefense.fandom.com/wiki/Missingno. - missingno image

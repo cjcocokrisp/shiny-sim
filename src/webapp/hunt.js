@@ -73,7 +73,7 @@ export default function Hunt(props) {
     const [open, setOpen] = useState(false);
     const [delaySeconds, setDelaySeconds] = useState("0");
     const [buttonDisabled, setButtonDisabled] = useState(false);
-    const [opacity, setOpacity] = useState("0");
+    const [opacity, setOpacity] = useState("opacity-0");
     const navigate = useNavigate();
     var timeout;
     let audio = new Audio(sound);
@@ -122,8 +122,8 @@ export default function Hunt(props) {
             if (found) {
                 setStatus(true);
                 determineImgUrl();
-                setOpacity("100");
-                timeout = setTimeout(() => {setOpacity("0")}, 2000);
+                setOpacity("opacity-100");
+                timeout = setTimeout(() => {setOpacity("opacity-0")}, 2000);
             }
         })
     }
@@ -143,10 +143,12 @@ export default function Hunt(props) {
     }
 
     const determineImgUrl = () => {
-        if (mon !== "") {
+        let type = status ? 'shiny' : 'default';
+        if (mon === "Missingno") {    
+            setImgUrl(`../../missingno_${type}.png`);
+        } else if (mon !== "") {
             fetch(`https://pokeapi.co/api/v2/pokemon/${mon.toLowerCase()}/`).then(res => {
                 res.json().then(data => {
-                    let type = status ? 'shiny' : 'default';
                     setImgUrl(data["sprites"][`front_${type}`]);
                 });
             })
@@ -197,7 +199,7 @@ export default function Hunt(props) {
                 </div>
                 <div className="flex max-w-[300px] max-h-[300px]">
                     <img src={imgUrl} className="w-[300px] h-[300px]"/>
-                    <img src="../../sparkle.gif" className={`-ml-[250px] w-[225px] h-[225px] z-10 self-center opacity-${opacity}`} />
+                    <img src="../../sparkle.gif" className={`-ml-[250px] w-[225px] h-[225px] z-10 self-center ${opacity}`} />
                 </div>
             </div>
             { determineButtons() }

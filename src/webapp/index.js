@@ -34,7 +34,7 @@ export default function App () {
                     <Route path="/" element={<Home/>} />
                     <Route path="/simulate/*" element={<Hunt type="Simulation"/>} />
                     <Route path="/track/*" element={<Hunt type="Tracked" />} />
-                    <Route path="stats" element={<Stats/>} />
+                    <Route path="stats/*" element={<Stats/>} />
                 </Routes>
             </BrowserRouter>
         </ThemeProvider>
