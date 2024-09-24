@@ -9,18 +9,19 @@ import { Dialog, DialogTitle } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from "@mui/icons-material/Remove";
+import sound from '../../public/sparkle.mp3'
 
 function OptionsDialog(props) {
-    const { name, onClose, open, delaySeconds, setDelaySeconds } = props;
-    const [ oddsRolls, setOddsRolls ] = useState("");
-    const [ oddsChance, setOddsChance ] = useState("");
+    const { name, onClose, open, delaySeconds, setDelaySeconds, odds } = props;
+    const [ oddsRolls, setOddsRolls ] = useState(odds != null ? odds.split('/')[0] : "");
+    const [ oddsChance, setOddsChance ] = useState(odds != null ? odds.split('/')[1] : "");
 
     const handleClose = (changed, odds) => {
         onClose(changed, odds);
     }
 
     const onSubmit = () => {
-        let params = new URLSearchParams
+        let params = new URLSearchParams;
         params.set("odds", oddsRolls + '/' + oddsChance);
         
         fetch(`/api/hunt/${name}?` + params.toString(), { method: "PATCH" }).then((res) => {
@@ -71,7 +72,11 @@ export default function Hunt(props) {
     const [imgUrl, setImgUrl] = useState("");
     const [open, setOpen] = useState(false);
     const [delaySeconds, setDelaySeconds] = useState("0");
+    const [buttonDisabled, setButtonDisabled] = useState(false);
+    const [opacity, setOpacity] = useState("0");
     const navigate = useNavigate();
+    var timeout;
+    let audio = new Audio(sound);
 
     let trim = type === "Simulation" ? 10 : 7;
     let path = useLocation().pathname.substring(trim);
@@ -87,6 +92,7 @@ export default function Hunt(props) {
                 setStatus(data["status"]);
             
                 setLoading(false);
+                determineImgUrl();
             })
         })        
     }, [mon, encounters, status, loading, imgUrl]);
@@ -102,13 +108,49 @@ export default function Hunt(props) {
         setOpen(false);
     }
 
-    if (mon !== "") {
-        fetch(`https://pokeapi.co/api/v2/pokemon/${mon.toLowerCase()}/`).then(res => {
-            res.json().then(data => {
-                let type = status ? 'shiny' : 'default';
-                setImgUrl(data["sprites"][`front_${type}`]);
-            });
+    const updateHunt = (found, increment) => {
+        let params = new URLSearchParams;
+        if (found) {
+            params.set("encounters", encounters + increment);
+            params.set("status", true);
+            params.set("end", "update");
+            audio.play();
+        }
+        params.set("encounters", encounters + increment);
+        fetch(`/api/hunt/${name}?` + params.toString(), { method: "PATCH" }).then((res) => {
+            setEncounters(encounters + increment);
+            if (found) {
+                setStatus(true);
+                determineImgUrl();
+                setOpacity("100");
+                timeout = setTimeout(() => {setOpacity("0")}, 2000);
+            }
         })
+    }
+
+    const roll = () => {
+        setButtonDisabled(true);
+        let params = new URLSearchParams;
+        params.set("odds", odds);
+        
+        fetch('/api/roll?' + params.toString()).then((res) => {
+            res.text().then((data) => {
+                let result = data === "true" ? true : false;
+                updateHunt(result, 1);
+            });
+        });
+        timeout = setTimeout(() => {setButtonDisabled(false)}, parseInt(delaySeconds) * 1000);
+    }
+
+    const determineImgUrl = () => {
+        if (mon !== "") {
+            fetch(`https://pokeapi.co/api/v2/pokemon/${mon.toLowerCase()}/`).then(res => {
+                res.json().then(data => {
+                    let type = status ? 'shiny' : 'default';
+                    setImgUrl(data["sprites"][`front_${type}`]);
+                });
+            })
+        }
     }
 
     if (loading) return (
@@ -120,16 +162,16 @@ export default function Hunt(props) {
     function determineButtons() {
         if (type === "Simulation") {
             return (
-                <Button variant="contained" color="secondary" style={{minWidth: "10vw", minHeight: "7vh"}}>Roll</Button>
+                <Button onClick={roll} disabled={buttonDisabled || status} variant="contained" color="secondary" style={{minWidth: "10vw", minHeight: "7vh"}}>Roll</Button>
             )
         } else if (type === "Tracked") {
             return (
                 <div className="flex gap-[1vw]">
-                    <Fab color="secondary" aria-label="remove">
+                    <Fab color="secondary" disabled={status} aria-label="remove" onClick={() => {updateHunt(false, -1)}}>
                         <RemoveIcon />
                     </Fab>
-                    <Button variant="contained" color="secondary" style={{minWidth: "6vw", minHeight: "7vh"}}>Found</Button>
-                    <Fab color="secondary" aria-label="add">
+                    <Button variant="contained" disabled={status} color="secondary" style={{minWidth: "6vw", minHeight: "7vh"}} onClick={() => {updateHunt(true, 1)}}>Found</Button>
+                    <Fab color="secondary" disabled={status} aria-label="add" onClick={() => {updateHunt(false, 1)}}>
                         <AddIcon />
                     </Fab>
                 </div>
@@ -153,10 +195,13 @@ export default function Hunt(props) {
                     <h1 className="text-3xl">Encounters: {encounters}</h1>
                     <h1 className="text-3xl text-center">Odds: {odds}</h1>
                 </div>
-                <img src={imgUrl} className="w-[300px] h-[300px]"/>
+                <div className="flex max-w-[300px] max-h-[300px]">
+                    <img src={imgUrl} className="w-[300px] h-[300px]"/>
+                    <img src="../../sparkle.gif" className={`-ml-[250px] w-[225px] h-[225px] z-10 self-center opacity-${opacity}`} />
+                </div>
             </div>
             { determineButtons() }
-            <OptionsDialog name={name} open={open} onClose={handleOptionsDialogClose} delaySeconds={delaySeconds} setDelaySeconds={setDelaySeconds} />
+            <OptionsDialog name={name} open={open}  onClose={handleOptionsDialogClose} delaySeconds={delaySeconds} odds={odds} setDelaySeconds={setDelaySeconds} />
         </div>
     )
 }

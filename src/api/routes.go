@@ -47,23 +47,24 @@ type MonList struct {
 func roll(w http.ResponseWriter, r *http.Request) {
 	// TODO: Add a bad response if odds is missing
 	odds := r.URL.Query().Get("odds")
+	odds = strings.Replace(odds, "%2F", "/", 1)
 	rawParams := strings.Split(odds, "/")
-	var params []int
+	var params []float64
 	for _, p := range rawParams {
-		n, _ := strconv.Atoi(p)
+		n, _ := strconv.ParseFloat(p, 64)
 		params = append(params, n)
 	}
 
-	if params[0] > 1 {
-		params[1] = params[1] / params[0]
-		params[0] = 1
-	}
+	//if params[0] > 1 {
+	//	params[1] = params[1] / params[0]
+	//	params[0] = 1
+	//}
 
-	roll := rand.Intn(params[1])
-	result := roll == 0
+	roll := rand.Float64()
+	result := roll < params[0]/params[1]
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(fmt.Sprintf("%t", result)))
-	fmt.Printf("Rolled with odds %d/%d, result: %t, rolled: %d\n", params[0], params[1], result, roll)
+	fmt.Printf("Rolled with odds %g/%g, result: %t, rolled: %g\n", params[0], params[1], result, roll)
 }
 
 func dbCreate(w http.ResponseWriter, r *http.Request) {
@@ -149,9 +150,9 @@ func dbUpdate(w http.ResponseWriter, r *http.Request) {
 			case "status":
 				updates.Status, _ = strconv.ParseBool(q[1])
 			case "start":
-				updates.Start = q[1]
+				updates.Start = time.Now().Format(time.DateTime)
 			case "end":
-				updates.End = q[1]
+				updates.End = time.Now().Format(time.DateTime)
 			}
 		}
 	}

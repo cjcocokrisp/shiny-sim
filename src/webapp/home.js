@@ -112,8 +112,12 @@ export default function Home(props) {
     function fetchHuntList() {
         fetch("/api/hunt").then(res => {
             res.json().then(data => {
-                data.reverse();
-                setHuntList(data);
+                if (data != null) {
+                    data.reverse();
+                    setHuntList(data);
+                } else {
+                    setHuntList([]);
+                }
             });
         });
     }
@@ -140,7 +144,10 @@ export default function Home(props) {
 
     let listItems;
     if (huntList.length == 0) {
-        listItems = (<h1>No Hunts Have Been Created</h1>);
+        listItems = (<div>
+                        <h1 className='text-center'>No Hunts Have Been Created</h1>
+                        <h1 className='text-center'>Press The '+' Button To Create One</h1>
+                    </div>);
     } else {
         listItems = huntList.map((hunt) => {
             let icon = hunt["status"] ? "./closed_pokeball.png" : "./open_pokeball.png";
