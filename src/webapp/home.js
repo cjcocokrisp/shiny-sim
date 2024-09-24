@@ -13,6 +13,7 @@ import TextField from '@mui/material/TextField'
 import { ToggleButtonGroup, ToggleButton } from '@mui/material'
 import Autocomplete from '@mui/material/Autocomplete'
 import Button from '@mui/material/Button'
+import { useNavigate } from 'react-router-dom'
 
 function CreateDialog(props) {
     const { onClose, open } = props;
@@ -64,12 +65,13 @@ function CreateDialog(props) {
         
         fetch(`/api/hunt/${name}?` + params.toString(), { method: "POST" }).then((res) => {
             console.log(res.status);
-        })
+        });
+        handleClose();
     }
 
     return (
         <Dialog onClose={handleClose} className="flex justify-center" open={open} PaperProps={{sx: {bgcolor: "secondary.main"}}}>
-            <DialogTitle>Create A New Hunt</DialogTitle>
+            <DialogTitle className='self-center'>Create A New Hunt</DialogTitle>
             <TextField style={{marginBottom: "2vh"}} label="Hunt Name" variant="outlined" onChange={(event) => setName(event.target.value)}/>
             <ToggleButtonGroup className='flex justify-center' style={{marginBottom: "2vh"}} value={type} color='primary' exclusive
                                 onChange={(event) => setType(event.target.value)}>
@@ -78,6 +80,7 @@ function CreateDialog(props) {
             </ToggleButtonGroup>
             <Autocomplete style={{marginBottom: "2vh"}} options={monList} renderInput={(params) => <TextField {...params} label="Mon" />} 
                           onChange={(event, value) => setMon(value)} />
+            <h1 className="self-center">Odds:</h1>
             <div className='flex justify-center gap-[0.5vw] mb-[2vh]'>
                     <TextField style={{maxWidth: "7vw"}} value={oddsRolls} label="Rolls" variant="outlined" onChange={handleNumValidation(setOddsRolls)}/>
                     <p className='self-center text-xl'>/</p>
@@ -90,42 +93,50 @@ function CreateDialog(props) {
     )
 }
 
-export default function Home() {
+export default function Home(props) { 
     const [huntList, setHuntList] = useState([]);
     const [open, setOpen] = useState(false);
     const [statsSelected, setStatsSelected] = useState(false);
     const [deleteSelected, setDeleteSelected] = useState(false);
+    const navigate = useNavigate();
 
     const handleDialogOpen = () => {
         setOpen(true);
     };
 
     const handleDialogClose = () => {
+        fetchHuntList();
         setOpen(false);
     };
 
-    useEffect(() => {
+    function fetchHuntList() {
         fetch("/api/hunt").then(res => {
             res.json().then(data => {
                 data.reverse();
                 setHuntList(data);
             });
         });
-    }, [setHuntList]) ;
-
-    const handleClick = (name) => {
+    }
+    
+    const handleClick = (name, type) => {
+        type = type === "Simulation" ? 'simulate' : 'track';
         return () => {
             if (deleteSelected) {
                 fetch(`/api/hunt/${name}`, { method: "DELETE" }).then((res) => {
                     console.log(res.status);
+                    fetchHuntList();
                 });
             } else if (statsSelected) {
-            
+                navigate(`/stats/${name}`);
             } else {
-                
+                navigate(`/${type}/${name}`);
             }
         }
     }
+
+    useEffect(() => {
+        fetchHuntList();
+    }, [setHuntList]) ;
 
     let listItems;
     if (huntList.length == 0) {
@@ -135,7 +146,7 @@ export default function Home() {
             let icon = hunt["status"] ? "./closed_pokeball.png" : "./open_pokeball.png";
             return (
                 <ListItem>
-                    <ListItemButton onClick={handleClick(hunt["name"])}> 
+                    <ListItemButton onClick={handleClick(hunt["name"], hunt["type"])}> 
                         <ListItemAvatar>
                             <Avatar src={icon} />
                         </ListItemAvatar>
@@ -165,7 +176,7 @@ export default function Home() {
             <Fab color="secondary" aria-label="add" className='self-end' onClick={handleDialogOpen}>
                 <AddIcon />
             </Fab>
-            <CreateDialog open={open} onClose={handleDialogClose} />
+            <CreateDialog open={open} onClose={() => {handleDialogClose(); fetchHuntList();}} />
         </div>
     )
 }

@@ -141,7 +141,7 @@ func dbUpdate(w http.ResponseWriter, r *http.Request) {
 			case "mon":
 				updates.Mon = q[1]
 			case "odds":
-				updates.Odds = q[1]
+				updates.Odds = strings.Replace(q[1], "%2F", "/", 1)
 			case "encounters":
 				updates.Encounters, _ = strconv.Atoi(q[1])
 			case "type":

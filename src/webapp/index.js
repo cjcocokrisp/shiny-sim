@@ -9,6 +9,7 @@ import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import { createTheme, ThemeProvider } from "@mui/material";
+import Hunt from "./hunt";
 
 const container = document.getElementById('root')
 const root = createRoot(container)
@@ -31,6 +32,8 @@ export default function App () {
             <BrowserRouter>
                 <Routes>
                     <Route path="/" element={<Home/>} />
+                    <Route path="/simulate/*" element={<Hunt type="Simulation"/>} />
+                    <Route path="/track/*" element={<Hunt type="Tracked" />} />
                     <Route path="stats" element={<Stats/>} />
                 </Routes>
             </BrowserRouter>
