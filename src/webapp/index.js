@@ -25,7 +25,6 @@ const mainTheme = createTheme({
     }
 });
 
-
 export default function App () {    
     return (
         <ThemeProvider theme={mainTheme}>

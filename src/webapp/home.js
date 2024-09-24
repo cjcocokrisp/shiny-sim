@@ -14,6 +14,7 @@ import { ToggleButtonGroup, ToggleButton } from '@mui/material'
 import Autocomplete from '@mui/material/Autocomplete'
 import Button from '@mui/material/Button'
 import { useNavigate } from 'react-router-dom'
+import Alert from '@mui/material/Alert'
 
 function CreateDialog(props) {
     const { onClose, open } = props;
@@ -23,6 +24,8 @@ function CreateDialog(props) {
     const [mon, setMon] = useState("Missingno");
     const [oddsRolls, setOddsRolls] = useState("");
     const [oddsChance, setOddsChance] = useState("");
+    const [alertMessage, setAlertMessage] = useState("Time to test your luck!");
+    const [alertType, setAlertType] = useState("info");
 
     useEffect(() => {
         fetch("/api/mon-list").then(res => {
@@ -54,23 +57,38 @@ function CreateDialog(props) {
         setType("Simulation");
         setOddsRolls(null);
         setOddsChance(null);
+        setAlertType("info");
+        setAlertMessage("Time to test your luck!");
         onClose();
     };
 
     const onSubmit = () => {
+
+        if (oddsRolls === "" || oddsChance === "") {
+            setAlertMessage("Neither of the odds settings can be blank!\n");
+            setAlertType("error");
+            return;
+        };
+
         let params = new URLSearchParams
         params.set("mon", mon);
         params.set("type", type);
         params.set("odds", oddsRolls + '/' + oddsChance);
         
         fetch(`/api/hunt/${name}?` + params.toString(), { method: "POST" }).then((res) => {
-            console.log(res.status);
+            if (res.status == 500) {
+                setAlertMessage("A hunt with this name already exists!\n");
+                setAlertType("error");
+            } else {
+                handleClose();
+            }
         });
-        handleClose();
+        
     }
 
     return (
         <Dialog onClose={handleClose} className="flex justify-center" open={open} PaperProps={{sx: {bgcolor: "secondary.main"}}}>
+            <Alert severity={`${alertType}`}>{alertMessage}</Alert>
             <DialogTitle className='self-center'>Create A New Hunt</DialogTitle>
             <TextField style={{marginBottom: "2vh"}} label="Hunt Name" variant="outlined" onChange={(event) => setName(event.target.value)}/>
             <ToggleButtonGroup className='flex justify-center' style={{marginBottom: "2vh"}} value={type} color='primary' exclusive

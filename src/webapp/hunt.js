@@ -21,13 +21,18 @@ function OptionsDialog(props) {
     }
 
     const onSubmit = () => {
-        let params = new URLSearchParams;
-        params.set("odds", oddsRolls + '/' + oddsChance);
-        
-        fetch(`/api/hunt/${name}?` + params.toString(), { method: "PATCH" }).then((res) => {
-            console.log(res.status);
-        });
-        handleClose(true, oddsRolls + '/' + oddsChance);
+        if (oddsRolls !== "" && oddsChance !== "") {
+            let params = new URLSearchParams;
+            params.set("odds", oddsRolls + '/' + oddsChance);
+            
+            fetch(`/api/hunt/${name}?` + params.toString(), { method: "PATCH" }).then((res) => {
+                console.log(res.status);
+            }); 
+            handleClose(true, oddsRolls + '/' + oddsChance);
+            return;
+        }
+        handleClose(false, "");
+        return;
     }
 
     const handleNumValidation = (stateSet) => {
