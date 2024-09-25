@@ -12,6 +12,6 @@ services:
       - .:/app
       - /app/node_modules
       - /app/src/api
-      - app/data
+      - /app/data
 
     command: npm run container
