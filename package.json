@@ -8,7 +8,9 @@
     "start": "npm run build && cd src/api && go build routes.go db.go && ./api",
     "webapp": "webpack serve --mode development --devtool inline-source-map --hot",
     "backend": "cd src/api && go build && ./api",
-    "dev": "concurrently \"npm run backend\" \"npm run webapp\""
+    "backend-precompiled": "cd src/api && ./routes",
+    "dev": "concurrently \"npm run backend\" \"npm run webapp\"",
+    "container": "concurrently \"npm run backend-precompiled\" \"npm run webapp\""
   },
   "author": "Christopher Coco",
   "license": "ISC",

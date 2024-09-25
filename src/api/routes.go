@@ -209,6 +209,9 @@ func compileNames() {
 }
 
 func main() {
+	// Create data directory if it doesn't exist
+	os.Mkdir("../../data", 0755)
+
 	// Open DB
 	db = GetTable()
 
